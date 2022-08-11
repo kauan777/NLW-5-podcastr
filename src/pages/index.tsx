@@ -40,13 +40,13 @@ export default function Home({latestEpisodes, allEpisodes}: HomeProps) {
 
   return (
     <div className={styles.homepage}>
-     <section className={styles.latestEpisodes}>
-        <h2>Últimos lançamentos</h2>
 
       <Head>
         <title>Home | Podcastr</title>
       </Head>
 
+     <section className={styles.latestEpisodes}>
+        <h2>Últimos lançamentos</h2>
     <ul>
       {latestEpisodes.map((episode, index) => {
         return(
@@ -75,7 +75,6 @@ export default function Home({latestEpisodes, allEpisodes}: HomeProps) {
         )
       })}
     </ul>
-
      </section>
 
     <section className={styles.allEpisodes}>

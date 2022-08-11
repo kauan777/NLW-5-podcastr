@@ -28,8 +28,6 @@ type EpisodeProps = {
 }
 
 
-
-
 export default function Episode({episode}: EpisodeProps){
 
     const { play } = usePlayer()
@@ -39,6 +37,7 @@ export default function Episode({episode}: EpisodeProps){
     // if(router.isFallback){
     //     return <p>Carregando...</p>
     // }
+    
     return(
     <>
         <Head>
