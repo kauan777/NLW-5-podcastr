@@ -1,173 +1,83 @@
-import { GetStaticProps } from "next"
+import React from "react";
+import ptBr from "date-fns/locale/pt-BR";
+import { GetStaticProps } from "next";
 import { api } from "../services/api";
-import Image from 'next/image';
-import Head from 'next/head';
-import Link from 'next/link'
-import ptBr from 'date-fns/locale/pt-BR'
-import { format, parseISO } from 'date-fns';
-import React from 'react';   
+import { format, parseISO } from "date-fns";
 import { convertDurationToTimeString } from "../utils/convertDurationToTimeString";
-import styles from './home.module.scss';
-import { usePlayer } from "../contexts/PlayerContext";
-
-// -----[FORMAS DE CONSUMIR UMA API]---------
-// SPA - utilizando o useEffect - Não chama com JS desabilitado por que roda no client-side
-// SSR - getServerSideProps - Chama mesmo com JS desabilitado por que roda no server-side
-// SSG - getStaticProps  - Chama uma vez mesmo com o JS desabilitado por que roda no server-side
-
-type Episode = {
-    id: string;
-    title: string;
-    thumbnail: string;
-    members: string;
-    duration: number;
-    durationAsString: string;
-    url: string;
-    publishedAt: string;
-
-}
+import { Episode } from "../@types/episode";
+import { useSearch } from "../contexts/SearchContext";
+import { HomeComponent } from "../components/Home";
+import { SearchComponent } from "../components/Search";
 
 type HomeProps = {
-  latestEpisodes:  Episode[] // || Array<Episode>
-  allEpisodes:  Episode[] 
-}
+  latestEpisodes: Episode[]; // || Array<Episode>
+  allEpisodes: Episode[];
+};
 
-export default function Home({latestEpisodes, allEpisodes}: HomeProps) {
-
-  const { playList } = usePlayer()
-
+export default function Home({ latestEpisodes, allEpisodes }: HomeProps) {
+  const { titlePodcast } = useSearch();
   const episodeList = [...latestEpisodes, ...allEpisodes];
 
   return (
-    <div className={styles.homepage}>
-
-      <Head>
-        <title>Home | Podcastr</title>
-      </Head>
-
-     <section className={styles.latestEpisodes}>
-        <h2>Últimos lançamentos</h2>
-    <ul>
-      {latestEpisodes.map((episode, index) => {
-        return(
-          <li key={episode.id}>
-            <Image 
-              width={192} 
-              height={192} 
-              objectFit="cover"
-              src={episode.thumbnail} 
-              alt={episode.title}
-              />
-
-            <div className={styles.episodeDetails}>
-              <Link href={`/episodes/${episode.id}`}>
-                <a>{episode.title}</a>
-              </Link>
-              <p>{episode.members}</p>
-              <span>{episode.publishedAt}</span>
-              <span>{episode.durationAsString}</span>
-            </div>
-
-            <button type="button" onClick={() => playList(episodeList, index)}>
-              <img src="/play-green.svg" alt="Tocar episódio"/>
-            </button>
-          </li>
-        )
-      })}
-    </ul>
-     </section>
-
-    <section className={styles.allEpisodes}>
-        <h2>Todos episódios</h2>
-
-        <table cellSpacing={0}>
-          <thead>
-          <tr>
-            <th></th>
-            <th>Podcast</th>
-            <th>Integrantes</th>
-            <th>Data</th>
-            <th>Duração</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody>
-            {allEpisodes.map((episode,index) =>{
-              return(
-                <tr key={episode.id}>
-                  <td>
-                    <Image
-                      width={120}
-                      height={120}
-                      src={episode.thumbnail}  
-                      alt={episode.title}
-                      objectFit="cover"
-                    />
-                  </td>
-                  <td>
-                    <Link href={`/episodes/${episode.id}`}>
-                    <a>{episode.title}</a>
-                    </Link>
-                  </td>
-                  <td>{episode.members}</td>
-                  <td style={{width: 100}}>{episode.publishedAt}</td>
-                  <td>{episode.durationAsString}</td>
-                  <td>
-                    <button type="button" onClick={()=> playList(episodeList, index + latestEpisodes.length )}>
-                      <img src="/play-green.svg" alt="Tocar episódio"/>
-                    </button>
-                  </td>
-                </tr>
-            )
-            })}
-          </tbody>
-        </table>
-    </section>
-
-    </div>
-    )
-
+    <>
+      {titlePodcast.length === 0 ? (
+        <HomeComponent
+          allEpisodes={allEpisodes}
+          latestEpisodes={latestEpisodes}
+          episodeList={episodeList}
+        />
+      ) : (
+        <SearchComponent
+          episodesAll={episodeList}
+          latestEpisodes={latestEpisodes}
+        />
+      )}
+    </>
+  );
 }
 
 export const getStaticProps: GetStaticProps = async () => {
-
   const { data }: any = await api.get("episodes", {
-
-    params:{
+    params: {
       _limit: 12, //limite de 12 eposisodios,
-      _sort: 'published_at', // ordernar pela published_at
-      _order: 'desc' //em ordem decresecnte
-    }
-  })  
+      _sort: "published_at", // ordernar pela published_at
+      _order: "desc", //em ordem decresecnte
+    },
+  });
 
-
-  const episodes = data.map(episode =>{
+  const episodes = data.map((episode) => {
     return {
       id: episode.id,
       title: episode.title,
       thumbnail: episode.thumbnail,
       members: episode.members,
-      publishedAt: format(parseISO(episode.published_at), 'd MMM yy', {locale: ptBr}),
+      publishedAt: format(parseISO(episode.published_at), "d MMM yy", {
+        locale: ptBr,
+      }),
       duration: Number(episode.file.duration),
-      durationAsString: convertDurationToTimeString(Number(episode.file.duration)),
+      durationAsString: convertDurationToTimeString(
+        Number(episode.file.duration)
+      ),
       url: episode.file.url,
     };
-  })
+  });
 
   const latestEpisodes = episodes.slice(0, 2); //Trazer os episodios da positon 0 até a 2, não vai chamar os primeiros episodios, pq da chamada o mais recente como primeiros
-  const allEpisodes= episodes.slice(2, episodes.length);
+  const allEpisodes = episodes.slice(2, episodes.length);
 
   return {
-    props:{
+    props: {
       latestEpisodes,
       allEpisodes,
-
     },
     revalidate: 60 * 60 * 8,
-  }   
-}
+  };
+};
 
-
+// -----[FORMAS DE CONSUMIR UMA API]---------
+// SPA - utilizando o useEffect - Não chama com JS desabilitado por que roda no client-side
+// SSR - getServerSideProps - Chama mesmo com JS desabilitado por que roda no server-side
+// SSG - getStaticProps  - Chama uma vez, mesmo com o JS desabilitado por que roda no server-side
 
 //SSR - Executa pelo lado do server toda vez que alguém acessa o essa página
 
@@ -182,5 +92,3 @@ export const getStaticProps: GetStaticProps = async () => {
       }
     }   
 }  */
-
-
