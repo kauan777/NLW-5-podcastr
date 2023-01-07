@@ -1,13 +1,13 @@
+import Link from "next/link";
+import Head from "next/head";
+import Image from "next/image";
+import styles from "./episode.module.scss";
 import { parseISO } from "date-fns";
 import format from "date-fns/format";
 import { ptBR } from "date-fns/locale";
-import Link from "next/link";
-import Head from "next/head";
 import { GetStaticPaths, GetStaticProps } from "next";
-import Image from "next/image";
 import { api } from "../../services/api";
 import { convertDurationToTimeString } from "../../utils/convertDurationToTimeString";
-import styles from "./episode.module.scss";
 import { usePlayer } from "../../contexts/PlayerContext";
 import { useSearch } from "../../contexts/SearchContext";
 import { useRouter } from "next/dist/client/router";
